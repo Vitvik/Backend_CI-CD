@@ -7,8 +7,9 @@ on:
 
 env:
     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+    #AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    AWS_REGION: ${{ secrets.AWS_REGION }}
 
 jobs:
   deploy:
@@ -22,7 +23,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}  
+        aws-region: ${{ secrets.AWS_REGION }}  
     
     - name: Login to Amazon ECR
       id: login-ecr
@@ -54,9 +55,11 @@ jobs:
           sudo mv kubectl /usr/local/bin/
       
     - name: Update kubeconfig for EKS
-      run: aws eks update-kubeconfig --name vitvik-test-cluster --region eu-west-1
+      run: aws eks update-kubeconfig --name vitvik-test-cluster --region ${{ secrets.AWS_REGION }}
         
     - name: Deploy to Kubernetes
       run: |
+            kubectl create namespace vitvik --dry-run=client -o yaml | kubectl apply -f -
+            sed -i 's|vitvik_ecr_back_images|vitvik_ecr_back_images:${{ github.sha }}|' k8s/ingres_backend.yaml
             kubectl apply -f k8s/ingres_backend.yaml
             kubectl rollout status deployment/backend-deployment -n vitvik
