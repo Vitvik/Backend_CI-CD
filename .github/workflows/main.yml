@@ -41,9 +41,22 @@ jobs:
       env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: vitvik_ecr_back_images
+          IMAGE_TAG: ${{ github.sha }}
           
       run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest   
-
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG   
+    
+    - name: Install kubectl
+      run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
       
+    - name: Update kubeconfig for EKS
+      run: aws eks update-kubeconfig --name vitvik-test-cluster --region eu-west-1
+        
+    - name: Deploy to Kubernetes
+      run: |
+            kubectl apply -f k8s/ingres_backend.yaml
+            kubectl rollout status deployment/backend-deployment -n vitvik
