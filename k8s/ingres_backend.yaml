@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: backend-container
-        image: 638436445856.dkr.ecr.eu-west-1.amazonaws.com/vitvik_ecr_back_images       
+        image: 638436445856.dkr.ecr.eu-west-1.amazonaws.com/vitvik_ecr_back_images:6f4c5c5cb7d9e2c0758b2d1333fec59842c52846       
         ports:
         - containerPort: 3001
 ---
