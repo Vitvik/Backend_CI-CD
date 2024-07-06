@@ -24,31 +24,32 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}  
     
-    #- name: Login to Amazon ECR
-    #  id: login-ecr
-    #  uses: aws-actions/amazon-ecr-login@v2    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2    
       
-    #- name: Install Docker
-    #  run: |
-    #    sudo apt update
-    #    sudo apt install apt-transport-https ca-certificates curl software-properties-common
-    #    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    #    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    #    sudo apt update
-    #    sudo apt install docker-ce  
+    - name: Install Docker
+      run: |
+        sudo apt update
+        sudo apt install apt-transport-https ca-certificates curl software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        sudo apt update
+        sudo apt install docker-ce  
     
-    #- name: Build, tag, and push image to Amazon ECR
-    #  env:
-    #      ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #      ECR_REPOSITORY: vitvik_ecr_back_images
-    #      IMAGE_TAG: ${{ github.sha }}
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: vitvik_ecr_back_images
+          IMAGE_TAG: ${{ github.sha }}
           
-    #  run: |
-    #      docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-    #      docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG   
-    #
+      run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG   
+    
     # name: Deploy to Kubernetes
     # sed -i 's|vitvik_ecr_back_images|vitvik_ecr_back_images:${{ github.sha }}|' k8s/ingres_backend.yaml
+    
     - name: Install kubectl
       run: |
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -63,16 +64,8 @@ jobs:
     - name: Verify kubectl configuration
       run: kubectl get svc  
 
-    #- name: Get EKS token
-    #  run: |
-    #    aws eks get-token --cluster-name vitvik-test-cluster --region ${{ secrets.AWS_REGION }} > /tmp/eks_token
-    #    echo "EKS_TOKEN=$(cat /tmp/eks_token | jq -r .status.token)" >> $GITHUB_ENV
-    
-   # - name: Deploy to Kubernetes
-   #   run: |
-   #     kubectl --token=${{ env.EKS_TOKEN }} apply -f k8s/ingres_backend.yaml --validate=false
-   #     kubectl --token=${{ env.EKS_TOKEN }} rollout status deployment/backend-deployment -n vitvik  
     - name: Deploy to Kubernetes
       run: |
+            sed -i 's|vitvik_ecr_back_images|vitvik_ecr_back_images:${{ github.sha }}|' k8s/ingres_backend.yaml
             kubectl apply -f k8s/ingres_backend.yaml
             kubectl rollout status deployment/backend-deployment -n vitvik
