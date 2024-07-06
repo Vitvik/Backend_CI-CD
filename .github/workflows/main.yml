@@ -60,10 +60,19 @@ jobs:
           aws eks update-kubeconfig --name vitvik-test-cluster --region ${{ secrets.AWS_REGION }}
           kubectl config view --raw
     
-    - name: Verify kubectl configuration
-      run: kubectl get svc      
+    #- name: Verify kubectl configuration
+    #  run: kubectl get svc  
 
+    - name: Get EKS token
+      run: |
+        aws eks get-token --cluster-name vitvik-test-cluster --region ${{ secrets.AWS_REGION }} > /tmp/eks_token
+        echo "EKS_TOKEN=$(cat /tmp/eks_token | jq -r .status.token)" >> $GITHUB_ENV
+    
     - name: Deploy to Kubernetes
       run: |
-            kubectl apply -f k8s/ingres_backend.yaml
-            kubectl rollout status deployment/backend-deployment -n vitvik
+        kubectl --token=${{ env.EKS_TOKEN }} apply -f k8s/ingres_backend.yaml
+        kubectl --token=${{ env.EKS_TOKEN }} rollout status deployment/backend-deployment -n vitvik  
+    #- name: Deploy to Kubernetes
+    #  run: |
+    #        kubectl apply -f k8s/ingres_backend.yaml
+    #        kubectl rollout status deployment/backend-deployment -n vitvik
