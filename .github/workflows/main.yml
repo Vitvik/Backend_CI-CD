@@ -70,7 +70,7 @@ jobs:
     
     - name: Deploy to Kubernetes
       run: |
-        kubectl --token=${{ env.EKS_TOKEN }} apply -f k8s/ingres_backend.yaml
+        kubectl --token=${{ env.EKS_TOKEN }} apply -f k8s/ingres_backend.yaml --validate=false
         kubectl --token=${{ env.EKS_TOKEN }} rollout status deployment/backend-deployment -n vitvik  
     #- name: Deploy to Kubernetes
     #  run: |
